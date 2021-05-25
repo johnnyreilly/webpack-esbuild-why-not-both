@@ -8,19 +8,19 @@ Builds can be made faster using tools like [esbuild](https://github.com/evanw/es
 
 With apologies to those suffering from JavaScript fatigue, once again the world of web development is evolving. It's long been common practice to run your JavaScript and TypeScript through some kind of Node.js based build tool, like webpack or rollup.js.  These tools are written in the same language they compile to; JavaScript (or TypeScript). The new kids on the blog are tools like [esbuild](https://github.com/evanw/esbuild), [Vite](https://github.com/vitejs/vite) and [swc](https://github.com/swc-project/swc). The significant difference between these and their predecessors is that they are written in languages like Go and Rust. Go and Rust enjoy far greater performance than JavaScript.  This translates into significantly faster builds. If you'd like to read about esbuild directly there's a [great post](https://blog.logrocket.com/fast-javascript-bundling-with-esbuild/) about it.
 
-These new tools are transformative and represent a likely future of build tooling for the web. In the long term, the likes of esbuild, Vite and friends will likely come to displace the current standard build tools.  So the webpacks, the rollups and so on. 
+These new tools are transformative and represent a likely future of build tooling for the web. In the long term, the likes of esbuild, Vite and friends may well come to displace the current standard build tools.  So the webpacks, the rollups and so on. 
 
 However, that’s the long term.  There’s a lot of projects out there that are already heavily invested in their current build tooling.  Mostly webpack.  Migrating to a new build tool is no small piece of work.  New projects might start with Vite, but existing ones are less likely to be ported.  There’s a reason webpack is so popular.  It does a lot of things very well indeed. It's battle tested on large projects; it's mature and it handles many use cases.
 
-So if you’re a team that wants to have faster builds, but doesn’t have the time to go through a big migration... Is there anything you can do?  Yes. There’s a middle ground to be explorerd. There’s a relatively new project named [esbuild-loader](https://github.com/privatenumber/esbuild-loader) developed by [hiroki osame](https://twitter.com/privatenumbr). It's a webpack loader built on top of esbuild. It allows users to swap out ts-loader or babel-loader with itself, and massively improve build speeds.
+So if you’re a team that wants to have faster builds, but doesn’t have the time to go through a big migration... Is there anything you can do?  Yes. There’s a middle ground to be explored. There’s a relatively new project named [esbuild-loader](https://github.com/privatenumber/esbuild-loader) developed by [hiroki osame](https://twitter.com/privatenumbr). It's a webpack loader built on top of esbuild. It allows users to swap out `ts-loader` or `babel-loader` with itself, and massively improve build speeds.
 
-To declare an interest here, I'm the primary maintainer of [ts-loader](https://github.com/TypeStrong/ts-loader); a popular TypeScript loader that is commonly used with webpack. The important thing here is developer productivity. As a node-based projects, ts-loader and babel-loader will never be able to compete with esbuild-loader in the same way. Go really, uh, goes!
+To declare an interest here, I'm the primary maintainer of [ts-loader](https://github.com/TypeStrong/ts-loader); a popular TypeScript loader that is commonly used with webpack. However, I feel strongly that the important thing here is developer productivity. As a node-based projects, `ts-loader` and `babel-loader` will never be able to compete with `esbuild-loader` in the same way. As a language, Go really, uh, goes!
 
-Whilst esbuild may not work for all use cases, it will for the majority. As such esbuild-loader represents a middle ground; and an early way to get access to the increased build speed that esbuild offers *without* saying goodbye to webpack.  This post will look at using esbuild-loader in your webpack setup.
+Whilst esbuild may not work for all use cases, it will for the majority. As such `esbuild-loader` represents a middle ground; and an early way to get access to the increased build speed that esbuild offers *without* saying goodbye to webpack.  This post will look at using `esbuild-loader` in your webpack setup.
 
 ## Migrating an existing project to esbuild
 
-It's very straightforward to migrate a project which uses either babel-loader or ts-loader to esbuild-loader. You install the dependency:
+It's very straightforward to migrate a project which uses either `babel-loader` or `ts-loader` to esbuild-loader. You install the dependency:
 
 ```bash
 npm i -D esbuild-loader
@@ -76,15 +76,15 @@ Or if we're using ts-loader, we make this change to our `webpack.config.js`:
   }
 ```
 
-## Create React App
+## Creating a baseline application
 
-Let's try this out in practice.  We're going to create a new React application using [Create React App](https://create-react-app.dev/):
+Let's try `esbuild-loader` out in practice.  We're going to create a new React application using [Create React App](https://create-react-app.dev/):
 
 ```bash
 npx create-react-app my-app --template typescript
 ```
 
-This will scaffold out a new React application using TypeScript in the `my-app` directory. It's worth knowing that Create React App uses babel-loader behind the scenes. 
+This will scaffold out a new React application using TypeScript in the `my-app` directory. It's worth knowing that Create React App uses `babel-loader` behind the scenes. 
 
 CRA also uses the [fork-ts-checker-webpack-plugin](https://github.com/TypeStrong/fork-ts-checker-webpack-plugin) to provide TypeScript type checking. This is very useful, as esbuild *just* does transpilation and [does not intend to provide type checking support](https://esbuild.github.io/faq/#upcoming-roadmap). So it's tremendous we still have that plugin in place as otherwise we would lose type checking.
 
@@ -100,7 +100,7 @@ One way to customise a Create React App build is by running `npm run eject` and 
 
 > *C*reate *R*eact *A*pp *C*onfiguration *O*verride is an easy and comprehensible configuration layer for create-react-app.
 
-We're going to use CRACO, so we'll add esbuild-loader and CRACO as dependencies: 
+We're going to use CRACO, so we'll add `esbuild-loader` and CRACO as dependencies: 
 
 ```bash
 npm install @craco/craco esbuild-loader --save-dev
@@ -183,8 +183,10 @@ You cannot remove a *single* loader using `CRACO`, so instead we'll remove both 
 
 Finally we'll swap out using Terser for JavaScript minification for esbuild as well.
 
-Our migration is complete. The next time we run `npm run build` we'll have Create React App running using `esbuild-loader` *without* having ejected. Once again we'll run `time npm run build` to execute a build of our simple app, this time using esbuild:
+Our migration is complete. The next time we build we'll have Create React App running using `esbuild-loader` *without* having ejected. Once again we'll run `time npm run build` to execute a build of our simple app and determine how long it takes:
 
 ![A screenshot of the completed build for Create React App with esbuild](create-react-app-esbuild.png)
 
-Our complete build, TypeScript type checking, transpilation, minification and so on, all took 13.85 seconds. We've reduced our overall compilation time by approximately one third; this is a tremendous improvement!
+Our complete build, TypeScript type checking, transpilation, minification and so on, all took 13.85 seconds. By migrating to `esbuild-loader` we've reduced our overall compilation time by approximately one third; this is a tremendous improvement!
+
+As your codebase scales and your application grows, compilation skyrockets also. With `esbuild-loader` you should get ongoing benefits to your build time.
