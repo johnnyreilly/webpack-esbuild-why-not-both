@@ -20,13 +20,13 @@ Whilst esbuild may not work for all use cases, it will for the majority. As such
 
 ## Migrating an existing project to esbuild
 
-It's very straightforward to migrate a project which uses either `babel-loader` or `ts-loader` to esbuild-loader. You install the dependency:
+It's very straightforward to migrate a project which uses either `babel-loader` or `ts-loader` to `esbuild-loader`. You install the dependency:
 
 ```bash
 npm i -D esbuild-loader
 ```
 
-Then if we are currently using babel-loader, we make this change to our `webpack.config.js`:
+Then if we are currently using `babel-loader`, we make this change to our `webpack.config.js`:
 
 ```diff
   module.exports = {
@@ -51,7 +51,7 @@ Then if we are currently using babel-loader, we make this change to our `webpack
   }
 ```
 
-Or if we're using ts-loader, we make this change to our `webpack.config.js`:
+Or if we're using `ts-loader`, we make this change to our `webpack.config.js`:
 
 ```diff
   module.exports = {
