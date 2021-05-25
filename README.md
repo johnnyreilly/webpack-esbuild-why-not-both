@@ -94,7 +94,7 @@ So we can understand the advantage of moving to esbuild, we first need a baselin
 
 Our complete build, TypeScript type checking, transpilation, minification and so on, all took 22.08 seconds. The question now is, what will happen if we drop esbuild into the mix?
 
-## CRACO
+## Introducing `esbuild-loader`
 
 One way to customise a Create React App build is by running `npm run eject` and then customising the code that CRA pumps out. Doing so is fine, but it means you can't keep track with CRA's evolution.  An alternative is to use a tool like [CRACO](https://github.com/gsoft-inc/craco) which allows us to tweak configuration in place. It describes itself this way:
 
