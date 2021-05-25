@@ -1,6 +1,8 @@
-# webpack-esbuild-why-not-both
+# webpack? esbuild? Why not both?
 
-Builds can be made faster using tools like [esbuild](https://github.com/evanw/esbuild). However, if you're invested in [webpack](https://github.com/webpack/webpack) but would still like to take advantage of speedier builds, there is a way. This post takes us through using esbuild alongside webpack using the [esbuild-loader](https://github.com/privatenumber/esbuild-loader).
+Builds can be made faster using tools like [esbuild](https://github.com/evanw/esbuild). However, if you're invested in [webpack](https://github.com/webpack/webpack) but would still like to take advantage of speedier builds, there is a way. This post takes us through using esbuild alongside webpack using [esbuild-loader](https://github.com/privatenumber/esbuild-loader).
+
+![A screenshot of the "why not both" meme adapted to include webpack and esbuild](webpack-esbuild-why-not-both.jpg)
 
 ## Web development
 
@@ -16,14 +18,173 @@ To declare an interest here, I'm the primary maintainer of [ts-loader](https://g
 
 Whilst esbuild may not work for all use cases, it will for the majority. As such esbuild-loader represents a middle ground; and an early way to get access to the increased build speed that esbuild offers *without* saying goodbye to webpack.  This post will look at using esbuild-loader in your webpack setup.
 
+## Migrating an existing project to esbuild
 
+It's very straightforward to migrate a project which uses either babel-loader or ts-loader to esbuild-loader. You install the dependency:
 
+```bash
+npm i -D esbuild-loader
+```
 
+Then if we are currently using babel-loader, we make this change to our `webpack.config.js`:
 
+```diff
+  module.exports = {
+    module: {
+      rules: [
+-       {
+-         test: /\.js$/,
+-         use: 'babel-loader',
+-       },
++       {
++         test: /\.js$/,
++         loader: 'esbuild-loader',
++         options: {
++           loader: 'jsx',  // Remove this if you're not using JSX
++           target: 'es2015'  // Syntax to compile to (see options below for possible values)
++         }
++       },
 
+        ...
+      ],
+    },
+  }
+```
 
-The blog post I’m proposing is kind of a longer form of what I’ve just been explaining.  Perhaps it might also include a description of how to migrate to use esbuild-loader from babel-loader or ts-loader.  Maybe an example of customising Create React App to use esbuild-loader with CRACO.  Or similar.
+Or if we're using ts-loader, we make this change to our `webpack.config.js`:
 
+```diff
+  module.exports = {
+    module: {
+      rules: [
+-       {
+-         test: /\.tsx?$/,
+-         use: 'ts-loader'
+-       },
++       {
++         test: /\.tsx?$/,
++         loader: 'esbuild-loader',
++         options: {
++           loader: 'tsx',  // Or 'ts' if you don't need tsx
++           target: 'es2015'
++         }
++       },
 
+        ...
+      ]
+    },
+  }
+```
 
-A blog post on using esbuild-loader to speed up your webpack builds
+## Create React App
+
+Let's try this out in practice.  We're going to create a new React application using [Create React App](https://create-react-app.dev/):
+
+```bash
+npx create-react-app my-app --template typescript
+```
+
+This will scaffold out a new React application using TypeScript in the `my-app` directory. It's worth knowing that Create React App uses babel-loader behind the scenes. 
+
+CRA also uses the [fork-ts-checker-webpack-plugin](https://github.com/TypeStrong/fork-ts-checker-webpack-plugin) to provide TypeScript type checking. This is very useful, as esbuild *just* does transpilation and [does not intend to provide type checking support](https://esbuild.github.io/faq/#upcoming-roadmap). So it's tremendous we still have that plugin in place as otherwise we would lose type checking.
+
+So we can understand the advantage of moving to esbuild, we first need a baseline to understand what performance looks like with babel-loader. We'll run `time npm run build` to execute a build of our simple app:
+
+![A screenshot of the completed build for Create React App](create-react-app-raw.png)
+
+Our complete build, TypeScript type checking, transpilation, minification and so on, all took 22.08 seconds. The question now is, what will happen if we drop esbuild into the mix?
+
+## CRACO
+
+One way to customise a Create React App build is by running `npm run eject` and then customising the code that CRA pumps out. Doing so is fine, but it means you can't keep track with CRA's evolution.  An alternative is to use a tool like [CRACO](https://github.com/gsoft-inc/craco) which allows us to tweak configuration in place. It describes itself this way:
+
+> *C*reate *R*eact *A*pp *C*onfiguration *O*verride is an easy and comprehensible configuration layer for create-react-app.
+
+We're going to use CRACO, so we'll add esbuild-loader and CRACO as dependencies: 
+
+```bash
+npm install @craco/craco esbuild-loader --save-dev
+```
+
+Then we'll swap over our various `scripts` in our `package.json` to use `CRACO`:
+
+```json
+"start": "craco start",
+"build": "craco build",
+"test": "craco test",
+```
+
+Our app now uses CRACO, but we haven't yet configured it.  So we'll add a `craco.config.js` file to the root of our project. This is where we swap out `babel-loader` for `esbuild-loader`:
+
+```js
+const { addAfterLoader, removeLoaders, loaderByName, getLoaders, throwUnexpectedConfigError } = require('@craco/craco');
+const { ESBuildMinifyPlugin } = require('esbuild-loader');
+
+const throwError = (message) =>
+    throwUnexpectedConfigError({
+        packageName: 'craco',
+        githubRepo: 'gsoft-inc/craco',
+        message,
+        githubIssueQuery: 'webpack',
+    });
+
+module.exports = {
+    webpack: {
+        configure: (webpackConfig, { paths }) => {
+            const { hasFoundAny, matches } = getLoaders(webpackConfig, loaderByName('babel-loader'));
+            if (!hasFoundAny) throwError('failed to find babel-loader');
+
+            console.log('removing babel-loader');
+            const { hasRemovedAny, removedCount } = removeLoaders(webpackConfig, loaderByName('babel-loader'));
+            if (!hasRemovedAny) throwError('no babel-loader to remove');
+            if (removedCount !== 2) throwError('had expected to remove 2 babel loader instances');
+
+            console.log('adding esbuild-loader');
+
+            const tsLoader = {
+                test: /\.(js|mjs|jsx|ts|tsx)$/,
+                include: paths.appSrc,
+                loader: require.resolve('esbuild-loader'),
+                options: { 
+                  loader: 'tsx',
+                  target: 'es2015'
+                },
+            };
+
+            const { isAdded: tsLoaderIsAdded } = addAfterLoader(webpackConfig, loaderByName('url-loader'), tsLoader);
+            if (!tsLoaderIsAdded) throwError('failed to add esbuild-loader');
+            console.log('added esbuild-loader');
+
+            console.log('adding non-application JS babel-loader back');
+            const { isAdded: babelLoaderIsAdded } = addAfterLoader(
+                webpackConfig,
+                loaderByName('esbuild-loader'),
+                matches[1].loader // babel-loader
+            );
+            if (!babelLoaderIsAdded) throwError('failed to add back babel-loader for non-application JS');
+            console.log('added non-application JS babel-loader back');
+
+            console.log('replacing TerserPlugin with ESBuildMinifyPlugin');
+            webpackConfig.optimization.minimizer = [
+                new ESBuildMinifyPlugin({
+                    target: 'es2015' 
+                })
+            ];
+
+            return webpackConfig;
+        },
+    },
+};
+```
+
+So what's happening here? The script looks for `babel-loader` usages in the default Create React App config. There will be two; one for TypeScript / JavaScript application code (we want to replace this) and one for non application JavaScript code. It's not too clear what non application JavaScript code there is or can be, so we'll leave it in place; it may be important. Significantly, the code we care about is the application code.
+
+You cannot remove a *single* loader using `CRACO`, so instead we'll remove both and we'll add back the non application JavaScript `babel-loader`. We'll also add `esbuild-loader` with the `{ loader: 'tsx', target: 'es2015' }` option set (to ensure we can process JSX/TSX).
+
+Finally we'll swap out using Terser for JavaScript minification for esbuild as well.
+
+Our migration is complete. The next time we run `npm run build` we'll have Create React App running using `esbuild-loader` *without* having ejected. Once again we'll run `time npm run build` to execute a build of our simple app, this time using esbuild:
+
+![A screenshot of the completed build for Create React App with esbuild](create-react-app-esbuild.png)
+
+Our complete build, TypeScript type checking, transpilation, minification and so on, all took 13.85 seconds. We've reduced our overall compilation time by approximately one third; this is a tremendous improvement!
