@@ -14,7 +14,7 @@ However, that’s the long term.  There’s a lot of projects out there that are
 
 So if you’re a team that wants to have faster builds, but doesn’t have the time to go through a big migration... Is there anything you can do?  Yes. There’s a middle ground to be explored. There’s a relatively new project named [esbuild-loader](https://github.com/privatenumber/esbuild-loader) developed by [hiroki osame](https://twitter.com/privatenumbr). It's a webpack loader built on top of esbuild. It allows users to swap out `ts-loader` or `babel-loader` with itself, and massively improve build speeds.
 
-To declare an interest here, I'm the primary maintainer of [ts-loader](https://github.com/TypeStrong/ts-loader); a popular TypeScript loader that is commonly used with webpack. However, I feel strongly that the important thing here is developer productivity. As a node-based projects, `ts-loader` and `babel-loader` will never be able to compete with `esbuild-loader` in the same way. As a language, Go really, uh, goes!
+To declare an interest here, I'm the primary maintainer of [ts-loader](https://github.com/TypeStrong/ts-loader); a popular TypeScript loader that is commonly used with webpack. However, I feel strongly that the important thing here is developer productivity. As node-based projects, `ts-loader` and `babel-loader` will never be able to compete with `esbuild-loader` in the same way. As a language, Go really, uh, goes!
 
 Whilst esbuild may not work for all use cases, it will for the majority. As such `esbuild-loader` represents a middle ground; and an early way to get access to the increased build speed that esbuild offers *without* saying goodbye to webpack.  This post will look at using `esbuild-loader` in your webpack setup.
 
