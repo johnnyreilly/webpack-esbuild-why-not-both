@@ -189,4 +189,4 @@ Our migration is complete. The next time we build we'll have Create React App ru
 
 Our complete build, TypeScript type checking, transpilation, minification and so on, all took 13.85 seconds. By migrating to `esbuild-loader` we've reduced our overall compilation time by approximately one third; this is a tremendous improvement!
 
-As your codebase scales and your application grows, compilation skyrockets also. With `esbuild-loader` you should get ongoing benefits to your build time.
+As your codebase scales and your application grows, compilation time can skyrocket also. With `esbuild-loader` you should get ongoing benefits to your build time.
